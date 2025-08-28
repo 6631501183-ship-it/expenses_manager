@@ -3,16 +3,34 @@ import 'dart:io';
 import 'dart:convert';
 
 void main() async {
-  final userId = await doLogin();
-  if (userId != null) {
-    await expenseMenu(userId);
+  print("=== Welcome to Expense Tracker ===");
+  while (true) {
+    print("\n1) Login");
+    print("2) Register");
+    print("0) Exit");
+    stdout.write("Select option: ");
+    final choice = stdin.readLineSync();
+
+    if (choice == "1") {
+      final userId = await doLogin();
+      if (userId != null) {
+        await expenseMenu(userId);
+      }
+    } else if (choice == "2") {
+      await doRegister();
+    } else if (choice == "0") {
+      break;
+    } else {
+      print("Invalid choice, try again.");
+    }
   }
+
   print("Program ended.");
 }
 
 // ================= Login ===================
 Future<String?> doLogin() async {
-  print("=== Expense Tracker Login ===");
+  print("\n=== Login ===");
   stdout.write("Username: ");
   final uname = stdin.readLineSync()?.trim();
   stdout.write("Password: ");
@@ -23,8 +41,12 @@ Future<String?> doLogin() async {
     return null;
   }
 
-  final url = Uri.parse("⁦http://localhost:3000/login⁩");
-  final res = await http.post(url, body: {"username": uname, "password": pwd});
+  final url = Uri.parse("http://localhost:3000/login");
+  final res = await http.post(
+    url,
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({"username": uname, "password": pwd}),
+  );
 
   if (res.statusCode == 200) {
     final data = jsonDecode(res.body);
@@ -37,6 +59,33 @@ Future<String?> doLogin() async {
   }
 }
 
+// ================= Register ===================
+Future<void> doRegister() async {
+  print("\n=== Register ===");
+  stdout.write("Username: ");
+  final uname = stdin.readLineSync()?.trim();
+  stdout.write("Password: ");
+  final pwd = stdin.readLineSync()?.trim();
+
+  if (uname == null || pwd == null || uname.isEmpty || pwd.isEmpty) {
+    print("Username or password cannot be empty.");
+    return;
+  }
+
+  final url = Uri.parse("http://localhost:3000/register");
+  final res = await http.post(
+    url,
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({"username": uname, "password": pwd}),
+  );
+
+  if (res.statusCode == 201) {
+    print("Registration successful! You can now login.");
+  } else {
+    print("Registration failed: ${res.body}");
+  }
+}
+
 // ================= Menu ===================
 Future<void> expenseMenu(String userId) async {
   while (true) {
@@ -46,7 +95,7 @@ Future<void> expenseMenu(String userId) async {
     print("3) Search expenses");
     print("4) Add expense");
     print("5) Delete expense");
-    print("0) Exit");
+    print("0) Logout");
     stdout.write("Select option: ");
     final choice = stdin.readLineSync();
 
@@ -74,10 +123,9 @@ Future<void> expenseMenu(String userId) async {
   }
 }
 
-// ================== Features ==================
-
+// ================= Features ==================
 Future<void> fetchAll(String userId) async {
-  final url = Uri.parse("⁦http://localhost:3000/expenses?userId=$userId⁩");
+  final url = Uri.parse("http://localhost:3000/expenses?userId=$userId");
   final res = await http.get(url);
 
   if (res.statusCode == 200) {
@@ -99,8 +147,7 @@ Future<void> fetchToday(String userId) async {
   final today =
       "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
 
-  final url =
-      Uri.parse("⁦http://localhost:3000/expenses?userId=$userId&date=$today⁩");
+  final url = Uri.parse("http://localhost:3000/expenses?userId=$userId&date=$today");
   final res = await http.get(url);
 
   if (res.statusCode == 200) {
@@ -126,8 +173,7 @@ Future<void> findExpense(String userId) async {
     return;
   }
 
-  final url =
-      Uri.parse("http://localhost:3000/expenses?userId=$userId&keyword=$key");
+  final url = Uri.parse("http://localhost:3000/expenses?userId=$userId&keyword=$key");
   final res = await http.get(url);
 
   if (res.statusCode == 200) {
@@ -160,7 +206,7 @@ Future<void> createExpense(String userId) async {
     final amount = int.parse(amtStr);
     final body = {"userId": userId, "item": item, "paid": amount};
     final res = await http.post(
-      Uri.parse("⁦http://localhost:3000/expenses⁩"),
+      Uri.parse("http://localhost:3000/expenses"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(body),
     );
@@ -186,7 +232,7 @@ Future<void> removeExpense(String userId) async {
 
   try {
     final id = int.parse(idStr);
-    final url = Uri.parse("⁦http://localhost:3000/expenses/$id?userId=$userId⁩");
+    final url = Uri.parse("http://localhost:3000/expenses/$id?userId=$userId");
     final res = await http.delete(url);
 
     if (res.statusCode == 200) {

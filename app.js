@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
   res.send("Expense Tracker API running");
 });
 
-// ----- Generate Password Hash -----
+// ----- Generate Password Hash (optional) -----
 app.get("/hash/:text", async (req, res) => {
   try {
     const raw = req.params.text;
@@ -26,7 +26,7 @@ app.get("/hash/:text", async (req, res) => {
 // ----- Login -----
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
-  const sql = "SELECT id, password FROM login WHERE username = ?";
+  const sql = "SELECT id, password FROM users WHERE username = ?";
 
   db.query(sql, [username], (err, rows) => {
     if (err) return res.status(500).json({ error: "DB query error" });
@@ -46,7 +46,7 @@ app.post("/login", (req, res) => {
 // ----- Register -----
 app.post("/register", (req, res) => {
   const { username, password } = req.body;
-  const check = "SELECT id FROM login WHERE username = ?";
+  const check = "SELECT id FROM users WHERE username = ?";
 
   db.query(check, [username], (err, rows) => {
     if (err) return res.status(500).send("DB error");
@@ -55,7 +55,7 @@ app.post("/register", (req, res) => {
     bcrypt.hash(password, 10, (hashErr, hash) => {
       if (hashErr) return res.status(500).send("Hash error");
 
-      const insert = "INSERT INTO login (username, password) VALUES (?, ?)";
+      const insert = "INSERT INTO users (username, password) VALUES (?, ?)";
       db.query(insert, [username, hash], (insErr) => {
         if (insErr) return res.status(500).send("Insert failed");
         res.status(201).send("User created");
@@ -88,8 +88,7 @@ app.get("/expenses", (req, res) => {
 // ----- Add Expense -----
 app.post("/expenses", (req, res) => {
   const { userId, item, paid } = req.body;
-  const sql =
-    "INSERT INTO expense (user_id, item, paid, date) VALUES (?, ?, ?, NOW())";
+  const sql = "INSERT INTO expense (user_id, item, paid, date) VALUES (?, ?, ?, NOW())";
   const params = [userId, item, paid];
 
   db.query(sql, params, (err) => {
@@ -116,5 +115,5 @@ app.delete("/expenses/:id", (req, res) => {
 // ----- Start Server -----
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(API running at http://localhost:${PORT});
+  console.log("API running at http://localhost:" + PORT);
 });
