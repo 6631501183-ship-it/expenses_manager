@@ -5,36 +5,35 @@ import 'dart:io';
 
 
 void main() async {
-  await login();
+  await doLogin();
   print("Good bye");
 }
-
-
-Future<void> login() async {
-  print("===== Login =====");
-  // Get username and password
+// ================= Login ===================
+Future<String?> doLogin() async {
+  print("=== Expense Tracker Login ===");
   stdout.write("Username: ");
-  String? username = stdin.readLineSync()?.trim();
+  final uname = stdin.readLineSync()?.trim();
   stdout.write("Password: ");
-  String? password = stdin.readLineSync()?.trim();
-  if (username == null || password == null) {
-    print("Incomplete input");
-    return;
+  final pwd = stdin.readLineSync()?.trim();
+
+  if (uname == null || pwd == null || uname.isEmpty || pwd.isEmpty) {
+    print("Username or password cannot be empty.");
+    return null;
   }
 
+  final url = Uri.parse("http://localhost:3000/login");
+  final res = await http.post(url, body: {"username": uname, "password": pwd});
 
-  final body = {"username": username, "password": password};
-  final url = Uri.parse('http://localhost:3000/login');
-  final response = await http.post(url, body: body);
-  // note: if body is Map, it is encoded by "application/x-www-form-urlencoded" not JSON
-  if (response.statusCode == 200) {
-    // the response.body is String
-    final result = response.body;
-    print(result);
-  } else if (response.statusCode == 401 || response.statusCode == 500) {
-    final result = response.body;
-    print(result);
+  if (res.statusCode == 200) {
+    final data = jsonDecode(res.body);
+    print("Login successful!");
+    return data["id"].toString();
   } else {
-    print("Unknown error");
+    final err = jsonDecode(res.body);
+    print("Login failed: $err");
+    return null;
   }
 }
+
+
+
