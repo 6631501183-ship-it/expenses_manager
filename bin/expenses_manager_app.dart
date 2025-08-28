@@ -127,7 +127,7 @@ Future<void> findExpense(String userId) async {
   }
 
   final url =
-      Uri.parse("⁦http://localhost:3000/expenses?userId=$userId&keyword=$key⁩");
+      Uri.parse("http://localhost:3000/expenses?userId=$userId&keyword=$key");
   final res = await http.get(url);
 
   if (res.statusCode == 200) {
