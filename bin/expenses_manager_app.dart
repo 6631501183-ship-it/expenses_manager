@@ -1,40 +1,14 @@
-// for http connection
-import 'package:http/http.dart' as http;
-// for stdin
+import 'dart:convert';
 import 'dart:io';
+import 'package:http/http.dart' as http;
 
+// Change this to your PC IP if using real device
+const String serverIP = "127.0.0.1"; 
+const int port = 3000;
 
 void main() async {
-  await login();
-  print("Good bye");
+  final userId = await doLogin();
+  if (userId != null) await expenseMenu(userId);
+  print("Program ended.");
 }
 
-
-Future<void> login() async {
-  print("===== Login =====");
-  // Get username and password
-  stdout.write("Username: ");
-  String? username = stdin.readLineSync()?.trim();
-  stdout.write("Password: ");
-  String? password = stdin.readLineSync()?.trim();
-  if (username == null || password == null) {
-    print("Incomplete input");
-    return;
-  }
-
-
-  final body = {"username": username, "password": password};
-  final url = Uri.parse('http://localhost:3000/login');
-  final response = await http.post(url, body: body);
-  // note: if body is Map, it is encoded by "application/x-www-form-urlencoded" not JSON
-  if (response.statusCode == 200) {
-    // the response.body is String
-    final result = response.body;
-    print(result);
-  } else if (response.statusCode == 401 || response.statusCode == 500) {
-    final result = response.body;
-    print(result);
-  } else {
-    print("Unknown error");
-  }
-}
